@@ -98,7 +98,7 @@ There is no observational dataset. Every draw is generated in code.
 - Passing CI means the laboratory still runs. It is not a warranty for an
   applied study.
 
-## Open questions
+## Remaining corpus bounds
 
 GT2 must remain a different computation from GT1; an assignment `gt2 = gt1`
 would make the independence tests fail. Nested-CV optimism is shown for
