@@ -11,7 +11,8 @@ Current as of August 2026.
   bootstrap, and ill-conditioned normal equations.
 - A path-based registry that does not require a hand-maintained index.
 - CLI: `list`, `validate`, `run`, `audit`.
-- CI: `python -m pytest` and `python scripts/run_all.py`.
+- CI: `python -m pytest`, `python -m problemforge validate all`, and
+  `python scripts/run_all.py`.
 
 ## Failures that are part of the design
 
@@ -19,7 +20,8 @@ Current as of August 2026.
 - Inner-CV best score as a generalisation estimate.
 - Majority-class accuracy with recall zero at 2% prevalence.
 - iid bootstrap variance under clustering.
-- `(X'X)^{-1}X'y` on a Hilbert-like design.
+- `(X'X)^{-1}X'y` on a Hilbert-like design (finite garbage inverse, or
+  LAPACK `LinAlgError`, depending on the BLAS build).
 
 Details: `docs/failures_and_corrections.md`.
 
