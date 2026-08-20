@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["gt1", "gt2", "seed", "diagnostics"],
+  "properties": {
+    "gt1": {"type": "number"},
+    "gt2": {"type": "object"},
+    "seed": {"type": "integer"},
+    "diagnostics": {"type": "object"}
+  }
+}

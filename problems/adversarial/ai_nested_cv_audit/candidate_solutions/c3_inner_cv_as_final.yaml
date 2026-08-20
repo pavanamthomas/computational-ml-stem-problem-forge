@@ -1,0 +1,10 @@
+id: c3_inner_cv_as_final
+claimed_score: 0.83
+protocol:
+  split: group_kfold
+  groups_respected: true
+  scaling: inside_cv
+  reported_score: inner_cv_best
+notes: >
+  Split and scaling are correct. GridSearchCV.best_score_ is reported as
+  generalisation. Earliest failure is estimation_protocol.

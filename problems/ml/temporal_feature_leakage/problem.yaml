@@ -1,0 +1,71 @@
+id: temporal_feature_leakage
+title: Rolling-window features that include the future
+domain: ml
+difficulty: EXPERT
+skills:
+  - time-series leakage
+  - lagged features
+  - rolling statistics
+  - walk-forward split
+estimated_compute: under one second on CPU
+seed_policy: numpy Generator via get_rng; default seed 2026. Same seed regenerates the AR(1) path and GT1.
+problem_statement: >
+  A univariate series is an AR(1). The task is to predict y[t] using only
+  observations with time index strictly less than t. The correct feature is a
+  lagged rolling mean. The wrong feature uses a window that includes y[t] or
+  y[t+1]. A linear model fitted on the leaked feature reports a strong
+  out-of-time R². The laboratory's primary number is the out-of-time R² gap
+  between the leaked feature and the lagged feature. A sentinel records, for
+  each t, the maximum source timestamp entering the feature; it must exceed
+  t-1 for the leaked construction and must not for the lagged construction.
+  Correlation of the leaked feature with y[t+1] is an additional detector.
+inputs:
+  T: 480
+  ar_coef: 0.72
+  innovation_sd: 0.55
+  window: 4
+  train_frac: 0.7
+outputs:
+  gt1:
+    name: leaked_minus_lagged_oos_r2
+    type: float
+  gt2:
+    name: future_source_timestamp_sentinel
+    type: object
+  gt3:
+    name: numpy_loop_lagged_mean
+    type: object
+assumptions:
+  - The permitted information set at t is observations with time index strictly less than t.
+  - The series is a causal AR(1) with Gaussian innovations. No seasonal component is present.
+  - Evaluation is a single walk-forward cut, not rolling-origin CV.
+constraints:
+  - Do not shuffle time.
+  - Do not standardise using the test segment.
+  - A feature whose max source timestamp is >= t is a specification violation for predicting y[t].
+ground_truth_units:
+  - unit_id: GT1
+    name: leaked_minus_lagged_oos_r2
+    description: Out-of-time R² of a linear model on the leaked rolling mean minus the same on the lagged rolling mean. Must be substantially positive.
+    kind: numerical
+  - unit_id: GT2
+    name: source_timestamp_and_future_corr
+    description: Fraction of times the leaked window uses a timestamp >= t, and correlation of the leaked feature with y[t+1] above a sentinel. The lagged feature has zero future sources.
+    kind: invariant
+  - unit_id: GT3
+    name: independent_numpy_rolling
+    description: Lagged rolling mean recomputed with an explicit NumPy loop, not pandas.rolling.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. The timestamp sentinel is an exact count, not a
+  tolerance claim. A solver that uses pandas rolling(center=True) or shift(-1)
+  must fail GT2.
+tolerance_policy:
+  kind: absolute
+  abs: 0.08
+  notes: Reference uses pandas rolling; verifier uses a NumPy loop and its own train cut arithmetic. The R² gap is large relative to 0.08.
+failure_modes:
+  - center=True rolling windows.
+  - shift(-1) of the target into a constructed feature.
+  - Fitting on shuffled rows of a time series.
+  - Claiming the leaked R² is forecast skill.

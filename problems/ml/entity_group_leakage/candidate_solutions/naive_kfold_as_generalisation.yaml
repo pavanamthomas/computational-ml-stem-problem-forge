@@ -1,0 +1,10 @@
+id: naive_kfold_as_generalisation
+claimed_score: 0.82
+protocol:
+  split: kfold
+  groups_respected: false
+  scaling: inside_cv
+  reported_score: naive_cv
+notes: >
+  Reports row-wise KFold accuracy. The number is typical of a successful
+  classifier and is not an estimate for new entities.

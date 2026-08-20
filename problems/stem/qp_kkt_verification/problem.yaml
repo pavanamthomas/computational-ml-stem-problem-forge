@@ -1,0 +1,60 @@
+id: qp_kkt_verification
+title: Convex QP checked by KKT residuals, not solver status
+domain: stem
+difficulty: EXPERT
+skills:
+  - quadratic programming
+  - KKT conditions
+  - primal feasibility
+estimated_compute: under two seconds on CPU
+seed_policy: Q, c, G, h are deterministic functions of get_rng(seed). Default 2026.
+problem_statement: >
+  A small strictly convex QP is solved with scipy.optimize.minimize (SLSQP).
+  Solver status is recorded and then ignored as a sufficiency claim. GT1 is
+  the primal objective 0.5 x'Qx + c'x recomputed from x. GT2 is primal
+  feasibility of inequalities and bounds. GT3 is the KKT residual
+  (stationarity and complementary slackness) assembled from Q, c, G, h, x
+  and multipliers, without trusting the solver message.
+inputs:
+  n: 4
+  n_ineq: 3
+outputs:
+  gt1:
+    name: primal_objective
+    type: number
+  gt2:
+    name: primal_feasibility
+    type: object
+  gt3:
+    name: kkt_residual
+    type: object
+assumptions:
+  - Q is made SPD by adding a multiple of I. The problem is strictly convex.
+  - Inequality form Gx <= h and x >= 0. No equality constraints.
+constraints:
+  - Do not accept solver success as the definition of optimality.
+  - Recompute the objective from x; do not return the solver's fun field as GT1 without that recompute.
+ground_truth_units:
+  - unit_id: GT1
+    name: recomputed_objective
+    description: 0.5 x' Q x + c' x from the returned x.
+    kind: numerical
+  - unit_id: GT2
+    name: primal_feasibility
+    description: max(Gx-h, 0) and max(-x, 0) below 1e-7.
+    kind: invariant
+  - unit_id: GT3
+    name: kkt_residual
+    description: Stationarity ||Qx+c+G'λ-μ|| and complementary slackness, independently assembled.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. A dummy x that is feasible but not stationary
+  must fail GT3. Solver status alone must not pass the laboratory.
+tolerance_policy:
+  kind: kkt_residual
+  abs: 1.0e-5
+  notes: SLSQP on a 4-variable SPD QP. Residuals should be well below 1e-5.
+failure_modes:
+  - Do not treat a successful solver status string as optimality without residuals
+  - Returning solver.fun without recomputing x'Qx
+  - Ignoring complementary slackness

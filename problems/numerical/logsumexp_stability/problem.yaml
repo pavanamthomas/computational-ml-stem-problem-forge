@@ -1,0 +1,59 @@
+id: logsumexp_stability
+title: Naive log-sum-exp overflows; max-subtraction does not
+domain: numerical
+difficulty: L4
+skills:
+  - numerical stability
+  - log-sum-exp
+  - overflow
+estimated_compute: under one second on CPU
+seed_policy: The vector is deterministic given seed through get_rng. Default 2026.
+problem_statement: >
+  For x with large positive entries, log(sum(exp(x))) overflows in float64.
+  The stable evaluation is m + log(sum(exp(x-m))) with m = max(x). GT1 is the
+  stable value on a vector with entries near 700-720. GT2 is the translation
+  identity logsumexp(x) = c + logsumexp(x-c). GT3 is agreement with
+  scipy.special.logsumexp on a different code path than the reference.
+inputs:
+  n: 12
+  location: 710
+outputs:
+  gt1:
+    name: logsumexp_value
+    type: number
+  gt2:
+    name: shift_identity
+    type: object
+  gt3:
+    name: scipy_logsumexp
+    type: object
+assumptions:
+  - IEEE-754 float64. Overflow of exp(x) for x > ~709 is expected for the naive formula.
+  - The value is the scalar log-sum-exp, not a softmax row.
+constraints:
+  - Do not clip x to a small range and call that stability.
+  - The naive formula is required as a documented failure, not as the reference value.
+ground_truth_units:
+  - unit_id: GT1
+    name: stable_logsumexp
+    description: Max-subtraction log-sum-exp of a vector with large entries.
+    kind: numerical
+  - unit_id: GT2
+    name: translation_identity
+    description: "Absolute shift identity |logsumexp(x) - c - logsumexp(x-c)| below 1e-10 for several c."
+    kind: invariant
+  - unit_id: GT3
+    name: scipy_agreement
+    description: scipy.special.logsumexp minus an independent loop implementation.
+    kind: independent_check
+validation_strategy: >
+  Naive log(sum(exp(x))) must be non-finite on the laboratory vector. The
+  stable value must be finite and match SciPy.
+tolerance_policy:
+  kind: absolute
+  abs: 1.0e-8
+  notes: float64 agreement between two stable implementations.
+failure_modes:
+  - naive np.log(np.sum(np.exp(x))) on large x
+  - subtracting the min instead of the max
+  - claiming overflow is a statistics problem

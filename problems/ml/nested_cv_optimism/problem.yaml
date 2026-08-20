@@ -1,0 +1,70 @@
+id: nested_cv_optimism
+title: Inner-CV best score is not a generalisation estimate
+domain: ml
+difficulty: EXPERT
+skills:
+  - nested cross-validation
+  - hyperparameter search
+  - selection bias
+  - high-dimensional noise
+estimated_compute: a few seconds on CPU
+seed_policy: numpy Generator via get_rng; default seed 2026. LogisticRegression is fitted with a fixed solver seed. Same DGP seed regenerates GT1.
+problem_statement: >
+  Labels depend weakly on two coordinates of a moderately high-dimensional
+  Gaussian design. The remaining coordinates are noise. A grid of inverse
+  regularisation values is searched by inner CV. The inner best score, computed
+  on the same rows that were used to choose the hyperparameter, is an optimistic
+  estimate of performance on new rows. Nested outer CV is the comparator.
+  GT1 is optimism = inner_best_score - nested_outer_mean, which is positive
+  on this DGP. GT2 records the selected hyperparameter as an identity, not as
+  a performance number. GT3 is a nested loop written without GridSearchCV.best_score_.
+inputs:
+  n: 80
+  p: 40
+  n_signal: 2
+  signal_coef: 0.35
+  C_grid: [0.02, 0.1, 1.0, 50.0]
+  inner_splits: 4
+  outer_splits: 4
+outputs:
+  gt1:
+    name: inner_minus_nested_accuracy
+    type: float
+  gt2:
+    name: selected_C_is_not_a_score
+    type: object
+  gt3:
+    name: handwritten_nested_cv
+    type: object
+assumptions:
+  - Rows are iid given X. There is no grouping or time index.
+  - The score is accuracy. The optimism claim is about that score, not about log loss.
+  - The grid is small and fixed. No claim is made about random search or Bayesian optimisation.
+constraints:
+  - Do not report GridSearchCV.best_score_ as the generalisation estimate.
+  - Do not fit StandardScaler on all rows before nested CV.
+ground_truth_units:
+  - unit_id: GT1
+    name: inner_minus_nested_accuracy
+    description: GridSearchCV.best_score_ on the full sample minus mean outer-fold accuracy of a nested loop. Must be positive.
+    kind: numerical
+  - unit_id: GT2
+    name: selected_hyperparameter_identity
+    description: The selected C is an element of the grid. It is not in [0, 1] as if it were accuracy, and it is not treated as a performance estimate.
+    kind: invariant
+  - unit_id: GT3
+    name: independent_nested_loop
+    description: Outer/inner loops written with explicit fold index sets. No reuse of GridSearchCV.best_score_.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. Optimism must be strictly positive. A candidate
+  that quotes inner CV as the final number fails the estimation-protocol stage.
+tolerance_policy:
+  kind: absolute
+  abs: 0.10
+  notes: Inner GridSearchCV and the handwritten nested loop differ in fold construction. Both must show positive optimism; the gap between those two optimism numbers is not a population parameter.
+failure_modes:
+  - Publishing GridSearchCV.best_score_ as test accuracy.
+  - Scaling X on the full matrix before CV.
+  - Treating the selected C as a measure of performance.
+  - Nested CV with leakage through a pre-fit encoder.

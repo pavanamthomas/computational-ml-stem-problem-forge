@@ -1,0 +1,61 @@
+id: ill_conditioned_normal_equations
+title: Naive (X'X)^{-1}X'y looks plausible and is worse
+domain: numerical
+difficulty: ADVERSARIAL
+skills:
+  - ill-conditioned least squares
+  - Hilbert matrix
+  - QR
+  - residual diagnostics
+estimated_compute: under one second on CPU
+seed_policy: The Hilbert-like design is deterministic. A tiny perturbation of y uses get_rng(seed). Default 2026.
+problem_statement: >
+  A Hilbert-like design is severely ill-conditioned. Forming
+  (X'X)^{-1} X'y produces a coefficient vector whose entries look like
+  ordinary numbers. QR / lstsq attains a smaller residual and a smaller
+  normal-equation residual ||X'X β - X'y||. GT1 is the residual-norm gap
+  naive minus QR (positive). GT2 is cond(X'X). GT3 is an independent SVD
+  solve.
+inputs:
+  n: 12
+  p: 8
+outputs:
+  gt1:
+    name: residual_gap_naive_minus_qr
+    type: number
+  gt2:
+    name: condition_number
+    type: object
+  gt3:
+    name: svd_solve
+    type: object
+assumptions:
+  - The design is a Hilbert-like Gram structure, not an observational regressor matrix.
+  - Finite ordinary-looking coefficients are not a residual check. Entries may be O(1) to a few thousand and still be a worse minimiser than QR.
+constraints:
+  - Do not regularise the naive inverse and still call it the naive map.
+  - Do not claim the QR solution is the causal parameter.
+ground_truth_units:
+  - unit_id: GT1
+    name: residual_gap
+    description: "L2 residual of naive beta minus L2 residual of QR beta; must be positive."
+    kind: numerical
+  - unit_id: GT2
+    name: gram_condition
+    description: "cond(X'X) is huge (greater than 1e8 on this design)."
+    kind: invariant
+  - unit_id: GT3
+    name: svd_residual
+    description: np.linalg.lstsq / SVD residual matches QR and beats the naive inverse.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. A candidate that quotes only β_naive and a
+  plausible-looking ||β|| fails the residual/KKT comparison.
+tolerance_policy:
+  kind: relative
+  rel: 0.15
+  notes: Residual gap is compared across QR (reference) and SVD (verifier). Both must beat the naive inverse.
+failure_modes:
+  - Forming inv(X.T @ X) @ X.T @ y on a Hilbert-like design
+  - Judging success by finite coefficients
+  - Ignoring the normal-equation residual of X'X beta minus X'y

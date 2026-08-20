@@ -1,0 +1,68 @@
+id: ai_nested_cv_audit
+title: Earliest protocol failure in nested-CV candidates
+domain: adversarial
+difficulty: ADVERSARIAL
+skills:
+  - nested cross-validation
+  - grouping
+  - preprocessing leakage
+  - candidate audit
+estimated_compute: a few seconds on CPU
+seed_policy: get_rng(seed) draws the grouped DGP. Default 2026 regenerates the reference nested score.
+problem_statement: >
+  Entities have random intercepts. A nested, grouped, inside-CV scaling
+  protocol is the correct evaluation of a C-grid logistic model. Candidate
+  YAML files in candidate_solutions/ each make a different subtle mistake
+  (random split despite groups; scaling fitted on all rows; inner CV quoted
+  as the final score). The audit engine must report the earliest substantive
+  failure in a fixed stage order rather than only 'wrong number'. GT1 is the
+  nested grouped outer accuracy of the reference protocol. GT2 is the
+  protocol invariant (split, scaling, reported score). GT3 is the audit of
+  the three candidates.
+inputs:
+  n_entities: 36
+  n_obs: 8
+  C_grid: [0.1, 1.0, 4.0]
+outputs:
+  gt1:
+    name: nested_grouped_outer_accuracy
+    type: number
+  gt2:
+    name: required_protocol
+    type: object
+  gt3:
+    name: candidate_earliest_failures
+    type: object
+assumptions:
+  - The correct split is GroupKFold. Rows of one entity must not straddle the outer fold boundary.
+  - StandardScaler must be fit on the training fold only.
+  - The reported number must be nested outer accuracy, not GridSearchCV.best_score_.
+constraints:
+  - Audit diagnosis is the earliest failed stage, not the longest list of sins.
+  - A candidate that both splits randomly and quotes inner CV is a split failure first.
+ground_truth_units:
+  - unit_id: GT1
+    name: nested_grouped_score
+    description: Mean outer-fold accuracy of nested GroupKFold with scaling inside the pipeline.
+    kind: numerical
+  - unit_id: GT2
+    name: protocol_identity
+    description: required split=group_kfold, scaling=inside_cv, reported_score=nested_outer.
+    kind: invariant
+  - unit_id: GT3
+    name: audit_earliest_failure
+    description: Three candidates diagnosed at split_integrity, preprocessing_isolation, and estimation_protocol respectively.
+    kind: protocol
+validation_strategy: >
+  Seed 2026 regenerates GT1. The audit of the three shipped candidates must
+  match the labelled earliest failures. A test that only checks claimed_score
+  is insufficient.
+tolerance_policy:
+  kind: absolute
+  abs: 0.08
+  notes: Nested grouped accuracy compared across sklearn GroupKFold and a manual entity fold. Protocol audit is exact.
+failure_modes:
+  - Diagnosing only the numeric gap
+  - Reporting inner CV as nested CV
+  - Scaling on the full matrix
+  - Random KFold on grouped rows

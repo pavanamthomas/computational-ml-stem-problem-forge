@@ -1,0 +1,62 @@
+id: plausible_wrong_auc
+title: A leaked score yields a convincing AUC
+domain: adversarial
+difficulty: ADVERSARIAL
+skills:
+  - leakage
+  - ROC-AUC
+  - contamination sentinels
+estimated_compute: under two seconds on CPU
+seed_policy: get_rng(seed) draws X, y, and the noise in the leaked score. Default 2026 regenerates GT1.
+problem_statement: >
+  Features are weakly related to a binary label. A legitimate logistic fit
+  has modest AUC. A wrong implementation injects a noisy function of the
+  evaluation labels into the score. The leaked AUC lies in a convincing
+  0.85–0.95 band. The verifier must detect the leak: permuting the permitted
+  features leaves the leaked AUC high, and a residual dependence of the score
+  on y given X is large. The reference uses only the permitted columns and
+  obtains a much lower AUC on the same DGP.
+inputs:
+  n: 900
+  p: 6
+  signal_coef: 0.18
+outputs:
+  gt1:
+    name: legitimate_auc
+    type: number
+  gt2:
+    name: leak_sentinel
+    type: object
+  gt3:
+    name: permutation_and_residual_dependence
+    type: object
+assumptions:
+  - The permitted feature set is the columns of X. y is not a permitted feature at evaluation time.
+  - The leaked constructor is an adversarial implementation, not a production model card.
+constraints:
+  - Do not use y to build the reference score.
+  - The leaked AUC must look like a strong result; hiding it by making leakage obvious (score = y) is not this problem.
+ground_truth_units:
+  - unit_id: GT1
+    name: legitimate_auc
+    description: ROC-AUC of logistic regression on X only, evaluated on a held-out split.
+    kind: numerical
+  - unit_id: GT2
+    name: leak_sentinel
+    description: Leaked AUC remains high after permuting X; legitimate AUC collapses toward 0.5.
+    kind: invariant
+  - unit_id: GT3
+    name: independent_leak_test
+    description: Partial residual correlation of leaked score with y after linear residualisation on X, plus a second AUC implementation.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. Leaked AUC must lie in approximately [0.85, 0.95].
+  Legitimate AUC must be materially lower. Feature permutation is the sentinel.
+tolerance_policy:
+  kind: absolute
+  abs: 0.10
+  notes: Legitimate AUC compared across sklearn (stratified split) and a Mann-Whitney / simple cut path. The leaked number is a diagnostic, not GT1.
+failure_modes:
+  - Injecting y into the score and reporting AUC 0.90 as model quality
+  - Permuting labels instead of features when running the sentinel
+  - Claiming the leak is only regularisation

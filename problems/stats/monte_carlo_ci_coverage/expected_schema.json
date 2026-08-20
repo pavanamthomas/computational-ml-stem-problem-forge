@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["gt1", "gt2", "seed", "diagnostics", "monte_carlo_se"],
+  "properties": {
+    "gt1": {"type": "number"},
+    "gt2": {"type": "object"},
+    "seed": {"type": "integer"},
+    "diagnostics": {"type": "object"},
+    "monte_carlo_se": {"type": "number"}
+  }
+}

@@ -1,0 +1,66 @@
+id: calibration_vs_discrimination
+title: Higher AUC is not better calibration
+domain: ml
+difficulty: EXPERT
+skills:
+  - calibration
+  - discrimination
+  - ECE
+  - reliability diagrams
+estimated_compute: under two seconds on CPU
+seed_policy: numpy Generator via get_rng; default seed 2026 regenerates scores, ECE, and GT1.
+problem_statement: >
+  Two scoring rules are defined on the same labelled draws. Model A uses a
+  moderate-signal logistic probability and is close to the diagonal of the
+  reliability diagram. Model B ranks better because it uses an extra signal
+  coordinate, then squashes probabilities toward 0 and 1, so ECE is worse.
+  GT1 is the pair of gaps (AUC_B - AUC_A, ECE_B - ECE_A), both required to be
+  positive. GT2 is the ECE identity as a weighted mean of |bin frequency -
+  bin mean score|. GT3 recomputes AUC from a Mann-Whitney U statistic, not
+  from sklearn.metrics.roc_auc_score.
+inputs:
+  n: 4000
+  n_bins: 10
+outputs:
+  gt1:
+    name: auc_gap_and_ece_gap
+    type: number
+  gt2:
+    name: ece_weighted_abs_dev
+    type: object
+  gt3:
+    name: mann_whitney_auc
+    type: object
+assumptions:
+  - Labels are Bernoulli given the true logistic probability. Models A and B are scoring rules, not fitted black boxes with unknown training leakage.
+  - ECE uses equal-width bins on [0, 1]. Empty bins contribute nothing.
+  - Discrimination is ROC-AUC. Calibration is ECE. They are different functionals.
+constraints:
+  - Do not report AUC as a calibration summary.
+  - Do not isotonic-calibrate B and then still call it the overconfident model.
+ground_truth_units:
+  - unit_id: GT1
+    name: signed_gaps
+    description: Product-style primary number is AUC_B - AUC_A. Diagnostics also carry ECE_B - ECE_A. Both gaps must be positive.
+    kind: numerical
+  - unit_id: GT2
+    name: ece_definition
+    description: ECE equals sum_k (n_k / n) |acc_k - conf_k| for equal-width bins.
+    kind: invariant
+  - unit_id: GT3
+    name: independent_auc
+    description: Mann-Whitney AUC for A and B, agreeing with sklearn within tolerance, with B still higher.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. Reliability bins for A lie closer to the diagonal
+  than B. A candidate that reports only AUC_B as 'the better model' fails the
+  interpretation, not just a numeric check.
+tolerance_policy:
+  kind: absolute
+  abs: 0.02
+  notes: AUC implementations (sklearn vs Mann-Whitney) should agree tightly. The primary GT1 is AUC_B - AUC_A from the reference.
+failure_modes:
+  - Selecting the higher-AUC model when decisions use the probability as a chance.
+  - Quoting AUC as if it were a calibration metric.
+  - Using too few bins and declaring ECE zero.
+  - Temperature scaling in the wrong direction and calling it calibration.

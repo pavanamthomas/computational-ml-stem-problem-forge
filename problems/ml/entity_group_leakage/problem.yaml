@@ -1,0 +1,75 @@
+id: entity_group_leakage
+title: Entity intercept leakage under naive KFold
+domain: ml
+difficulty: EXPERT
+skills:
+  - grouped cross-validation
+  - leakage detection
+  - random-intercept DGP
+  - OneHot entity encoding
+estimated_compute: a few seconds on CPU
+seed_policy: numpy Generator via problemforge.rng.get_rng; default seed 2026. The same seed regenerates the DGP and therefore GT1.
+problem_statement: >
+  Entities carry a persistent random intercept that strongly determines the
+  binary label. Rows are repeated observations of the same entity. A pipeline
+  one-hot encodes entity identity. Naive KFold places the same entity in both
+  train and test, so the intercept is available at test time and CV accuracy
+  is high. GroupKFold holds out entire entities; the one-hot encoder then
+  emits zeros for unseen entities (handle_unknown=ignore) and accuracy
+  collapses toward the weak covariate. The estimand is the accuracy gap
+  naive_cv_acc - grouped_cv_acc, which must be substantially positive on this
+  DGP. A leakage sentinel counts entities that appear in both sides of a
+  naive split. An independent construction of the same split comparison is
+  required; copying the reference module is not verification.
+inputs:
+  n_entities: 50
+  n_obs_per_entity: 12
+  intercept_sd: 2.0
+  x_coef: 0.25
+  n_splits: 5
+  model: LogisticRegression on OneHot(entity) + x
+outputs:
+  gt1:
+    name: naive_minus_grouped_accuracy
+    type: float
+  gt2:
+    name: leaked_entity_count_naive
+    type: object
+  gt3:
+    name: independent_gap_and_group_assignment
+    type: object
+assumptions:
+  - Labels are generated from a logistic random-intercept model. The intercept is an entity-level constant, not a time-varying shock.
+  - Entity identity is a permitted training feature. The scientific question is the validation split, not whether entity IDs exist.
+  - OneHotEncoder(handle_unknown='ignore') maps unseen entities to the zero vector. That is the mechanism by which grouped splits remove the intercept.
+  - Rows are exchangeable given entity. There is no temporal order in this DGP.
+constraints:
+  - Do not use the test-fold labels to build features.
+  - Do not drop the entity column. The point is what happens when it is kept.
+  - n_splits must divide neither the claim nor the leakage count; both are computed.
+ground_truth_units:
+  - unit_id: GT1
+    name: naive_minus_grouped_accuracy
+    description: Mean KFold accuracy minus mean GroupKFold accuracy. Must be substantially positive.
+    kind: numerical
+  - unit_id: GT2
+    name: leakage_sentinel
+    description: Count of entities that appear in both train and test under naive KFold, and zero such entities under GroupKFold.
+    kind: invariant
+  - unit_id: GT3
+    name: independent_split_comparison
+    description: Group assignment rebuilt by sorting unique entity ids and taking fold = i % n_splits, with accuracy from hand-counted agreements, not sklearn.metrics.accuracy_score.
+    kind: independent_check
+validation_strategy: >
+  Regenerating with seed 2026 must reproduce GT1. The leakage sentinel must be
+  strictly positive for naive splits and zero for grouped splits. A
+  deliberately broken solver that reports only naive CV must fail GT2/GT3.
+tolerance_policy:
+  kind: absolute
+  abs: 0.12
+  notes: The reference uses sklearn KFold/GroupKFold; the verifier uses a permutation split and sorted-entity folds. Both gaps must be large; fold-construction disagreement of a few points is expected and is not a population parameter.
+failure_modes:
+  - Reporting naive KFold accuracy as the generalisation estimate.
+  - Treating entity ID as an ordinary iid feature.
+  - Using GroupKFold but then encoding entities on the full dataset before splitting.
+  - Claiming the gap is a causal effect of grouping rather than a validation artefact of an intercept that is not available for new entities.

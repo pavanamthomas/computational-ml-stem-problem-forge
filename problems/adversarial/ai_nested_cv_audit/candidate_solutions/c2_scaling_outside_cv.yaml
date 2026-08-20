@@ -1,0 +1,11 @@
+id: c2_scaling_outside_cv
+claimed_score: 0.74
+protocol:
+  split: group_kfold
+  groups_respected: true
+  scaling: outside_cv
+  scaler_fit_on: full_data
+  reported_score: nested_outer
+notes: >
+  Groups are respected. The scaler is fit on all rows before the outer loop.
+  That is a preprocessing-isolation failure even if the quoted score is nested.

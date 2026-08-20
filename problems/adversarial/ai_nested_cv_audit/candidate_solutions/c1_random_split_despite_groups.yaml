@@ -1,0 +1,10 @@
+id: c1_random_split_despite_groups
+claimed_score: 0.81
+protocol:
+  split: kfold
+  groups_respected: false
+  scaling: inside_cv
+  reported_score: nested_outer
+notes: >
+  Entity intercepts are in the DGP. A random KFold is already a split-integrity
+  failure. The claimed number is also optimistic; that is later in the stage order.

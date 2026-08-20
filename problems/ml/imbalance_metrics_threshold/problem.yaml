@@ -1,0 +1,66 @@
+id: imbalance_metrics_threshold
+title: Accuracy conceals a 2% prevalence task
+domain: ml
+difficulty: EXPERT
+skills:
+  - class imbalance
+  - precision-recall
+  - cost-sensitive thresholds
+  - Brier and log loss
+estimated_compute: under two seconds on CPU
+seed_policy: numpy Generator via get_rng; default seed 2026 regenerates the DGP and GT1.
+problem_statement: >
+  Labels have prevalence near 2%. A logistic score is moderately informative.
+  Accuracy at threshold 0.5 and majority-class accuracy both look excellent.
+  Recall, PR-AUC, and expected cost under FN cost much larger than FP cost
+  do not. GT1 is ROC-AUC minus PR-AUC on the fitted scores (positive and
+  material). GT2 is the majority-classifier identity: accuracy equals 1 minus
+  prevalence and recall equals 0. GT3 compares sklearn.metrics to a
+  hand-built confusion matrix on a tiny fixture.
+inputs:
+  n: 5000
+  target_prevalence: 0.02
+  fn_cost: 50
+  fp_cost: 1
+outputs:
+  gt1:
+    name: roc_auc_minus_pr_auc
+    type: float
+  gt2:
+    name: majority_accuracy_and_zero_recall
+    type: object
+  gt3:
+    name: hand_confusion_vs_sklearn
+    type: object
+assumptions:
+  - The cost ratio is a stated laboratory choice, not an estimated loss from a clinic or a fraud book.
+  - Threshold 0.5 is the default sklearn cut, not a Bayes-optimal cut under the stated costs.
+  - Scores are in-sample logistic probabilities used to exhibit metric geometry, not a claim of out-of-sample deployment performance.
+constraints:
+  - Do not resample the DGP to 50/50 before quoting accuracy.
+  - Report the denominator of recall (the number of positives).
+ground_truth_units:
+  - unit_id: GT1
+    name: roc_auc_minus_pr_auc
+    description: sklearn ROC-AUC minus average precision on the same scores. Must be substantially positive at 2% prevalence.
+    kind: numerical
+  - unit_id: GT2
+    name: majority_classifier_identity
+    description: Predict-all-negative accuracy equals 1-prevalence; recall equals 0.
+    kind: invariant
+  - unit_id: GT3
+    name: fixture_confusion_identity
+    description: Hand-computed precision/recall/F1/specificity match sklearn on a four-row fixture.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. GT2 is an algebraic identity on the realised
+  prevalence. GT3 is an exact match on a fixture that does not use the DGP.
+tolerance_policy:
+  kind: absolute
+  abs: 0.03
+  notes: ROC-AUC minus PR-AUC is compared across sklearn (reference) and a Mann-Whitney / PR trapezoid implementation (verifier). Fixture metrics must match exactly.
+failure_modes:
+  - Quoting accuracy on a 2% task.
+  - Selecting threshold 0.5 when FN cost is 50 times FP cost.
+  - Treating ROC-AUC as a substitute for PR-AUC at low prevalence.
+  - Reporting F1 without the confusion-matrix denominators.

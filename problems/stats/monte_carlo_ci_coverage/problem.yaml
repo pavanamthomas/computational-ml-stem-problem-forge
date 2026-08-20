@@ -1,0 +1,63 @@
+id: monte_carlo_ci_coverage
+title: 95% mean-interval coverage is a Monte Carlo statement
+domain: stats
+difficulty: L3
+skills:
+  - confidence intervals
+  - coverage
+  - Monte Carlo standard error
+estimated_compute: a few seconds on CPU
+seed_policy: get_rng(seed) draws all Monte Carlo replicates. Default 2026 regenerates GT1 exactly. Correctness versus 0.95 is judged by Monte Carlo SE, not exact equality.
+problem_statement: >
+  Under iid Normal draws, the Student-t interval for the mean is simulated
+  R=2000 times at n=30. GT1 is the coverage estimate phat. Correctness is
+  not phat = 0.95. GT2 compares |phat-0.95| to sqrt(p(1-p)/R) with p=0.95.
+  GT3 recomputes coverage with an explicit loop and scipy.stats.t.ppf, not
+  the reference's vectorised construction.
+inputs:
+  n: 30
+  R: 2000
+  nominal: 0.95
+  mean: 0.0
+  sd: 1.0
+outputs:
+  gt1:
+    name: coverage_estimate
+    type: number
+  gt2:
+    name: monte_carlo_se_check
+    type: object
+  gt3:
+    name: loop_coverage
+    type: object
+assumptions:
+  - Draws are iid Normal(0,1). The t-interval's textbook sampling model holds.
+  - R=2000 is a laboratory size, not an asymptotic theorem.
+constraints:
+  - Do not hard-code coverage as 0.95.
+  - Do not fail the problem because phat is 0.946.
+ground_truth_units:
+  - unit_id: GT1
+    name: coverage_phat
+    description: Fraction of Monte Carlo replicates in which the t-interval contains 0.
+    kind: numerical
+  - unit_id: GT2
+    name: se_bound
+    description: "abs(phat-0.95) is judged against se_mult * sqrt(0.95*0.05/R), not against zero."
+    kind: invariant
+  - unit_id: GT3
+    name: independent_loop
+    description: Coverage recomputed with a Python loop and t.ppf critical values.
+    kind: independent_check
+validation_strategy: >
+  Same seed regenerates GT1. A test that requires phat == 0.95 exactly is
+  itself a specification error. Boundary tests for the SE rule live in the
+  package tests.
+tolerance_policy:
+  kind: monte_carlo_se
+  se_mult: 5.0
+  notes: Compare two implementations of coverage on the same seed; also use the SE to judge distance from 0.95.
+failure_modes:
+  - Requiring exact equality to 0.95
+  - Treating a single interval as P(parameter in interval | data) = 0.95
+  - Using R=50 and declaring coverage failed

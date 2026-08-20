@@ -1,0 +1,64 @@
+id: bootstrap_dependence_trap
+title: iid bootstrap understates variance under clustering
+domain: stats
+difficulty: L4
+skills:
+  - bootstrap
+  - clustered dependence
+  - cluster-robust variance
+estimated_compute: a few seconds on CPU
+seed_policy: get_rng(seed) draws the clustered DGP and the bootstrap weights. Default 2026 regenerates GT1.
+problem_statement: >
+  Observations share a cluster intercept. The estimand is the grand mean.
+  An iid row bootstrap understates the sampling variance of the mean.
+  A cluster bootstrap does not. GT1 is the ratio of cluster-bootstrap
+  variance to iid-bootstrap variance (greater than 1 by a material factor).
+  GT2 is that variance ratio as an invariant against a stated lower bound.
+  GT3 is an analytic cluster-robust variance for the mean, not a bootstrap.
+inputs:
+  n_clusters: 40
+  cluster_size: 15
+  intercept_sd: 1.0
+  noise_sd: 0.35
+  n_boot: 400
+outputs:
+  gt1:
+    name: cluster_over_iid_variance_ratio
+    type: number
+  gt2:
+    name: ratio_lower_bound
+    type: object
+  gt3:
+    name: analytic_cluster_robust
+    type: object
+assumptions:
+  - Clusters are iid. Rows are iid given the cluster intercept. The iid bootstrap's sampling model is therefore false.
+  - The estimand is the expected value of a row, which equals the expected intercept.
+constraints:
+  - Do not quote the iid bootstrap SE as if rows were independent.
+  - Block length is the cluster, not an ad hoc time-series block.
+ground_truth_units:
+  - unit_id: GT1
+    name: variance_ratio
+    description: Var_cluster-boot / Var_iid-boot of the grand mean. Must exceed 1.8 on this DGP.
+    kind: numerical
+  - unit_id: GT2
+    name: ratio_bound
+    description: The same ratio is bounded below by 1.8; this is not a restatement of the mean estimate.
+    kind: invariant
+  - unit_id: GT3
+    name: analytic_crve
+    description: Cluster-robust variance of the mean, (G/(G-1)) * sum_g (s_g)^2 / n^2 with s_g the cluster sum of residuals.
+    kind: independent_check
+validation_strategy: >
+  Seed 2026 regenerates GT1. A candidate that reports only the iid bootstrap
+  SE fails GT2. Analytic CRVE must be closer to the cluster bootstrap than to
+  the iid bootstrap.
+tolerance_policy:
+  kind: relative
+  rel: 0.45
+  notes: Bootstrap variance estimates are noisy at 400 replicates. The ratio must still exceed 1.8 for both paths.
+failure_modes:
+  - iid bootstrap of clustered rows
+  - Treating the cluster bootstrap as a fix for time-series dependence of unknown form
+  - Reporting the mean as if the SE were identified by iid resampling
