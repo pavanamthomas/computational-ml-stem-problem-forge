@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: If you use this repository, please cite it as below.
+title: computational-ml-stem-problem-forge
+authors:
+  - family-names: Thomas
+    given-names: Pavanam
+    email: thomaspavanam@gmail.com
+license: MIT
+repository-code: https://github.com/pavanamthomas/computational-ml-stem-problem-forge
+url: https://github.com/pavanamthomas/computational-ml-stem-problem-forge
+abstract: >
+  A laboratory for original computationally intensive ML, statistical, and STEM
+  problems with unambiguous formalization, Python reference solutions,
+  independent verification, detection of subtly wrong but numerically
+  plausible answers, reproducible ground truth, and AI-generated candidate
+  solution audit.
+keywords:
+  - machine learning
+  - ground truth
+  - leakage
+  - nested cross-validation
+  - numerical stability
+  - verification
+  - adversarial evaluation
+version: 0.1.0
+date-released: "2026-08-20"
