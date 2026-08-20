@@ -1,8 +1,11 @@
 # Plausible coefficients, worse residuals
 
 `β = (X'X)^{-1} X'y` on a Hilbert-like design often returns finite numbers
-of ordinary magnitude. The residual ||Xβ - y|| and the normal-equation
-residual ||X'Xβ - X'y|| reveal the damage.
+of ordinary magnitude. On some LAPACK builds the same Gram matrix is
+reported singular and `inv` raises. Both are the pathology: forming the
+inverse is not a well-defined float64 operation here. The residual
+||Xβ - y|| (or a finite sentinel if inversion is refused) and the
+normal-equation residual ||X'Xβ - X'y|| reveal the damage.
 
 ## What looks right
 

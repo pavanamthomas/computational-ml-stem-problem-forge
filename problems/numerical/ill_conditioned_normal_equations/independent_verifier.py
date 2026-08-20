@@ -12,6 +12,9 @@ N = 12
 P = 8
 
 
+INVERSION_FAIL_RESIDUAL = 1.0e16
+
+
 def _design(seed: int) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     rng = get_rng(seed)
     i = np.arange(1, N + 1)[:, None]
@@ -34,8 +37,11 @@ def verify(seed: int = 2026) -> dict[str, object]:
     b_svd = _svd_solve(X, y)
     b_lstsq = np.linalg.lstsq(X, y, rcond=None)[0]
     gram = X.T @ X
-    b_naive = np.linalg.inv(gram) @ (X.T @ y)
-    r_naive = float(np.linalg.norm(X @ b_naive - y))
+    try:
+        b_naive = np.linalg.inv(gram) @ (X.T @ y)
+        r_naive = float(np.linalg.norm(X @ b_naive - y))
+    except np.linalg.LinAlgError:
+        r_naive = INVERSION_FAIL_RESIDUAL
     r_svd = float(np.linalg.norm(X @ b_svd - y))
     r_lstsq = float(np.linalg.norm(X @ b_lstsq - y))
     cond = float(np.linalg.cond(gram))
