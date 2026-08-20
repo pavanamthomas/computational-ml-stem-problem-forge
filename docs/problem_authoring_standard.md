@@ -48,8 +48,8 @@ the DGP formula is allowed; sharing the solver is not.
 
 ## Difficulty
 
-`L1`–`L4` are computational intensity and subtlety, not a grade. Recruiter-facing
-flagship cases in this corpus are `EXPERT` and `ADVERSARIAL`.
+`L1`–`L4` are computational intensity and subtlety, not a grade. Flagship
+cases in this corpus are labelled `EXPERT` or `ADVERSARIAL`.
 
 ## What is forbidden
 
@@ -59,5 +59,5 @@ flagship cases in this corpus are `EXPERT` and `ADVERSARIAL`.
 - Causal language for a predictive metric.
 - Marketing adjectives in the problem statement.
 
-The registry discovers `problem.yaml` recursively. No central index file is
-required to add the 101st problem.
+The registry discovers `problem.yaml` recursively. Adding another problem
+does not require a hand-maintained index.

@@ -13,17 +13,19 @@ question bank, and not a claim of empirical discovery.
 
 Author: Dr. Pavanam Thomas ([GitHub](https://github.com/pavanamthomas), thomaspavanam@gmail.com).
 
-**Problem → formalization → assumptions → computation → validation → interpretation → limitations.**
+The distinctive claim is independent verification: a reference solution is not accepted merely because it runs. Each problem states an object, a second calculation of a different invariant, and a third code path. Copying the reference module is not verification.
 
-## Recruiter 90-Second Audit
+## Research question
 
-Inspect, in this order:
+When a candidate answer is numerically plausible, what independent object would still detect that it is wrong?
+
+Start here:
 
 1. [`FLAGSHIP_CASE_STUDY.md`](FLAGSHIP_CASE_STUDY.md) — entity-intercept leakage from formulation through an incorrect candidate.
-2. [`problems/ml/entity_group_leakage/`](problems/ml/entity_group_leakage/) and [`problems/ml/nested_cv_optimism/`](problems/ml/nested_cv_optimism/) — EXPERT laboratories with three ground-truth units each.
+2. [`problems/ml/entity_group_leakage/`](problems/ml/entity_group_leakage/) and [`problems/ml/nested_cv_optimism/`](problems/ml/nested_cv_optimism/) — laboratories with three ground-truth units each.
 3. [`problems/adversarial/`](problems/adversarial/) — a leaked AUC that looks like 0.90, and an audit that names the earliest protocol failure.
 4. [`docs/ground_truth_protocol.md`](docs/ground_truth_protocol.md) and [`docs/adversarial_failure_taxonomy.md`](docs/adversarial_failure_taxonomy.md).
-5. [`src/problemforge/`](src/problemforge/) — registry, schema, runner, audit. Built for 100+ problems; twelve are complete.
+5. [`src/problemforge/`](src/problemforge/) — path-based registry, schema, runner, audit. Twelve problems are complete.
 6. [`tests/`](tests/) — seed regeneration, schema, independence of verifier files, deliberate-failure detection, tolerance boundaries.
 
 ```bash
@@ -35,7 +37,7 @@ python -m problemforge list
 
 Python 3.11 or newer.
 
-## Technical Decisions I Can Defend
+## Design
 
 - **Three ground-truth units, not one number.** GT1 is the primary object. GT2 is an invariant that is a different computation (split occupancy, majority-classifier identities, translation of log-sum-exp, Gram condition number, Monte Carlo SE). GT3 is a different code path. Copying the reference module is not verification.
 - **Tolerance is a named policy.** Coverage is judged by Monte Carlo SE, not `phat == 0.95`. KKT is a residual, not solver status. Boundaries are tested just inside and just outside.
@@ -43,7 +45,7 @@ Python 3.11 or newer.
 - **Audit reports the earliest substantive failure.** A random split on grouped data is a split failure even if the quoted score is also inner CV.
 - **The registry is path-based.** Adding `problems/<domain>/<id>/problem.yaml` is enough. No hand-maintained index.
 
-## Deliberate Failure Cases
+## Failure cases
 
 These are required to keep failing in the documented way:
 
@@ -57,7 +59,7 @@ These are required to keep failing in the documented way:
 
 Locked by per-problem tests and `docs/failures_and_corrections.md`.
 
-## Independent Validation
+## Independent verification
 
 Every problem has `independent_verifier.py` imported from a qualified path so
 that twelve files named `reference_solution.py` do not collide. Repo-level
@@ -66,7 +68,7 @@ deliberately broken reference fails invariants. SciPy log-sum-exp, Mann–Whitne
 AUC, analytic cluster-robust variance, NNLS KKT multipliers, and SVD least
 squares appear as GT3 paths.
 
-## Reproduce Everything
+## Reproducibility
 
 ```bash
 python -m pip install -e .
@@ -83,7 +85,7 @@ regenerable. Provenance: [`docs/data_policy.md`](docs/data_policy.md),
 
 There is no observational dataset. Every draw is generated in code.
 
-## Limitations and Non-Claims
+## Known limitations
 
 - The twelve DGPs are stylised. They check procedures. They are not models of
   a labour market, a clinic, or a trading book.
@@ -96,23 +98,13 @@ There is no observational dataset. Every draw is generated in code.
 - Passing CI means the laboratory still runs. It is not a warranty for an
   applied study.
 
-## Interview Questions This Repository Naturally Raises
+## Open questions
 
-- If production only scores known entities, is GroupKFold the right split, and
-  what estimand did you just change?
-- Why is `GridSearchCV.best_score_` not a test accuracy? What quantity is it?
-- How would you test leakage without access to the feature-construction source?
-- When should coverage of a 95% interval be allowed to be 0.946?
-- Why is cond(X'X) the wrong one-number summary of whether β is usable, and
-  what residual would you quote instead?
-- How do you recover KKT multipliers if the solver does not return them?
-- If a candidate both shuffled grouped rows and quoted inner CV, which failure
-  do you report first, and why is that a specification rather than taste?
-- What would break if GT2 were implemented as `gt2 = gt1`?
-- How does an iid bootstrap fail for a mean under a random intercept, and what
-  linear-functional sandwich replaces it?
-- Discrimination and calibration disagreed on the same draws. Which loss would
-  force a choice, and what does the repository refuse to choose for you?
+GT2 must remain a different computation from GT1; an assignment `gt2 = gt1`
+would make the independence tests fail. Nested-CV optimism is shown for
+accuracy on one grid, not for log-loss. The QP laboratory is inequality-only.
+Candidate audit reads protocol YAML and does not parse arbitrary Python.
+See `ROADMAP.md`.
 
 ## Corpus (12 problems)
 
