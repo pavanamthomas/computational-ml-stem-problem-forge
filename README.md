@@ -7,9 +7,8 @@ problems: unambiguous formalization, a Python reference, an independent
 verifier, detection of subtly wrong but numerically plausible answers,
 reproducible ground truth, and audit of candidate solutions.
 
-This is working notes for quantitative review — including review of
-computational arguments in AI-evaluator settings — not a product, not a
-question bank, and not a claim of empirical discovery.
+This is working notes for quantitative review of computational arguments,
+not a product, not a question bank, and not a claim of empirical discovery.
 
 Author: Dr. Pavanam Thomas ([GitHub](https://github.com/pavanamthomas), thomaspavanam@gmail.com).
 
